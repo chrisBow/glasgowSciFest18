@@ -46,5 +46,35 @@ timelineFrame$replyToSN <- ifelse(timelineFrame$replyToSN != 0, "Reply", "Messag
 
 print(table(timelineFrame$replyToSN, timelineFrame$screenName))
 
+# simplify dataframe
 
+timeFrame <- timelineFrame %>%
+  select(text, favoriteCount, replyToSN, created, screenName, retweetCount)
 
+# separate date from date plus time
+
+timeFrame$createdChar <- as.character(timeFrame$created)
+
+timeFrame$date <- as.Date(sapply(timeFrame$createdChar, 
+                         FUN = function(x) {
+                           strsplit(x, " ")[[1]][1]
+                           }
+                         ))
+
+# social media activity overview
+
+tweetDates <- timeFrame %>%
+  group_by(date, screenName) %>%
+  summarise(tweets = n()) %>%
+  filter(date > "2018-01-01")
+
+ggplot(tweetDates, aes(x = date, y = tweets, colour = screenName)) + geom_line()
+
+tweetDatesMessages <- timeFrame %>%
+  filter(replyToSN == "Message") %>%
+  group_by(date, screenName) %>%
+  summarise(tweets = n()) %>%
+  filter(date > "2018-01-01")
+
+ggplot(tweetDatesMessages, aes(x = date, y = tweets, colour = screenName)) + geom_line()
+ggplot(tweetDatesMessages, aes(x = screenName, y = tweets)) + geom_boxplot()
